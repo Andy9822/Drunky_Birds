@@ -3,7 +3,7 @@ from pygame.locals import*
 from bird import *
 from pipe import *
 import time
-import ct
+from settings import *
 
 def fillEntireTubos(screen_largura,screen_altura):
     entireTubos = []
@@ -24,7 +24,7 @@ def drawGame(screen,entireTubos,bird,birdImage,downImg,points,clock,corLetra,bg)
 
     attPoints(screen,points,corLetra)
     pygame.display.update()
-    clock.tick(30)
+    clock.tick(FPS)
 
 def updatePositions(screen_largura,screen_altura,entireTubos,bird):
         bird.update(screen_altura)
@@ -71,10 +71,38 @@ def gameOver(screen,bird,entireTubos,screen_altura,screen_largura,over,corLetra)
     showMessage(screen,'Press enter to play again...',20,screen_largura/2 + 8  ,screen_altura/4 + 50,corLetra)
     pygame.display.update()
 
-def joga1(clock,screen,screen_largura,screen_altura):
+def buttonInteract(screen,screen_largura,screen_altura,mouse,farButton,onButton,inButton,width,height,apertou):
+    click = pygame.mouse.get_pressed()
+    action = False
+
+    if screen_largura/2.5 + width > mouse[0] > screen_largura/2.5 and screen_altura/2.25 + height > mouse[1] > screen_altura/2.25:
+        if click[0] == 1:
+            screen.blit(inButton,(screen_largura/2.5,screen_altura/2.25))
+            apertou = True
+        elif click[0] == 0 and apertou:
+            apertou = False
+            action = True
+        else:
+            apertou = False
+            screen.blit(farButton,(screen_largura/2.5,screen_altura/2.25))
+    else:
+        screen.blit(onButton,(screen_largura/2.5,screen_altura/2.25))
+        apertou = False
+
+    return apertou,action
+
+def botaoStart(screen,screen_largura,screen_altura,mouse,farButton,onButton,inButton,width,height,apertou):
+    apertou,action =  buttonInteract(screen,screen_largura,screen_altura,mouse,farButton,onButton,inButton,width,height,apertou)
+    if action:
+        joga1(screen,screen_largura,screen_altura)
+        action = False
+    return apertou
+
+def joga1(screen,screen_largura,screen_altura):
     ##Seta as configurações visuais e do jogo
     x = screen_largura * 0.42
     y = screen_altura * 0.4
+    clock = pygame.time.Clock()
 
 
     ##Inicializa passaro
@@ -97,7 +125,7 @@ def joga1(clock,screen,screen_largura,screen_altura):
     over = pygame.mixer.Sound('resources/gameOver.wav')
 
     #START NOW!
-    drawGame(screen,entireTubos,bird,birdImage,downImg,points,clock,ct.preto,background)
+    drawGame(screen,entireTubos,bird,birdImage,downImg,points,clock,preto,background)
     pygame.display.update()
 
     while jogando:
@@ -118,9 +146,9 @@ def joga1(clock,screen,screen_largura,screen_altura):
 
         if not pause:
             updatePositions(screen_largura,screen_altura,entireTubos,bird)
-            drawGame(screen,entireTubos,bird,birdImage,downImg,points,clock,ct.preto,background)
+            drawGame(screen,entireTubos,bird,birdImage,downImg,points,clock,preto,background)
             if  hasDead(bird,entireTubos):
-                gameOver(screen,bird,entireTubos,screen_altura,screen_largura,over,ct.preto)
+                gameOver(screen,bird,entireTubos,screen_altura,screen_largura,over,preto)
                 pause = True
             elif points != bird.pontos:
                 points = bird.pontos
@@ -131,23 +159,31 @@ def mainFunction():
     screen_largura = 1000
     screen_altura = 600
     icone = pygame.image.load('resources/icone.jpg')
+    start0 =  pygame.image.load('resources/sg0.png')
+    start1 =  pygame.image.load('resources/sg1.png')
+    start2 =  pygame.image.load('resources/sg2.png')
+    #instructions =  pygame.image.load('resources/instr.png')        #screen.blit(instructions,(screen_largura/3.5,screen_altura/3.5))
+
     pygame.display.set_icon(icone)
     background = pygame.image.load('resources/forest.png')
     #background = pygame.transform.scale(background,(screen_largura,screen_altura))
     screen = pygame.display.set_mode((screen_largura,screen_altura))
     pygame.display.set_caption("Hello Drunk Gamer")
     clock = pygame.time.Clock()
+    apertou = False
+    jogar = False
 
     jogando = True
     while jogando:
         for evento in pygame.event.get():
-            if evento.type ==  pygame.KEYDOWN:
-                if evento.key == 13:
-                    joga1(clock,screen,screen_largura,screen_altura)
-            elif evento.type == QUIT:
+            mouse = pygame.mouse.get_pos()
+
+            if evento.type == QUIT:
                 jogando = False
-        screen.fill(ct.branco)
+
+        screen.fill(branco)
         screen.blit(background,(0,0))
+        apertou = botaoStart(screen,screen_largura,screen_altura,mouse,start0,start1,start2,190,45,apertou)
         pygame.display.update()
 
     pygame.display.quit()
